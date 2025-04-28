@@ -35,7 +35,7 @@ def main_page(request):
     return render(request, "planner/main_page.html", context)
 
 
-@csrf_exempt
+@csrf_protect
 def signup_view(request):
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -95,7 +95,7 @@ def signup_view(request):
         return render(request, 'planner/signup.html')
 
 
-@csrf_exempt
+@csrf_protect
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -122,7 +122,7 @@ def logout_view(request):
     return redirect('main_page')
 
 
-@csrf_exempt
+@csrf_protect
 def password_reset_view(request):
     """
     비밀번호 찾기:
@@ -323,7 +323,7 @@ def schedule_detail_view(request, plan_no):
     }
     return render(request, "planner/schedule_detail.html", context)
 
-@csrf_exempt
+@csrf_protect
 def update_profile_view(request):
     """
     회원정보 수정: 로그인한 사용자의 정보를 업데이트합니다.
@@ -364,7 +364,7 @@ def update_profile_view(request):
         return render(request, 'planner/update_profile.html', {'user': user})
 
 
-@csrf_exempt
+@csrf_protect
 def delete_profile_view(request):
     """
     회원탈퇴: 로그인한 사용자가 자신의 회원정보를 탈퇴 처리합니다.
@@ -692,7 +692,7 @@ def plan_schedule_view(request):
 openai.api_key = os.getenv("OPENAI_API_KEY")
 logger = logging.getLogger(__name__)
 
-@csrf_exempt
+@csrf_protect
 def chatbot(request):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
@@ -727,7 +727,7 @@ def chatbot(request):
         logger.error(f"Chatbot Error: {e}")  # 서버 로그에 오류 기록
         return JsonResponse({"reply": f"서버 오류 발생: {str(e)}"}, status=500)
 
-@csrf_exempt
+@csrf_protect
 def save_schedule_view(request):
     if request.method == "POST":
         try:
@@ -818,7 +818,7 @@ def save_schedule_view(request):
 
 
 
-@csrf_exempt
+@csrf_protect
 def update_destination_view(request):
     """
     AJAX GET 요청으로 전달된 destination을 기반으로,
@@ -921,7 +921,7 @@ def update_destination_view(request):
         "recommended_places": recommended_places
     })
 
-@csrf_exempt
+@csrf_protect
 def schedule_delete_view(request, plan_no):
     user_email = request.session.get("user_email")
     if not user_email:
@@ -1063,7 +1063,7 @@ def toggle_bookmark(request):
         return JsonResponse({"status": "success"}, status=200)
     return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
 
-@csrf_exempt
+@csrf_protect
 def comment_reply(request, parent_id):
     if request.method == "POST":
         user_email = request.session.get("user_email")
@@ -1099,7 +1099,7 @@ def comment_reply(request, parent_id):
         return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
 
 
-@csrf_exempt
+@csrf_protect
 def comment_update(request, comment_id):
     if request.method == "POST":
         user_email = request.session.get("user_email")
@@ -1133,7 +1133,7 @@ def comment_update(request, comment_id):
         return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
 
 
-@csrf_exempt
+@csrf_protect
 def comment_delete(request, comment_id):
     if request.method == "POST":
         user_email = request.session.get("user_email")

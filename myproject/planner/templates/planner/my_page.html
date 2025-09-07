@@ -142,9 +142,9 @@
               <h3>기본 정보</h3>
               <p>이메일: {{ user.email }}</p>
               <p>이름: {{ user.name }}</p>
-              <p>생년월일: {{ user.birth }}</p>
-              <p>주소: {{ user.addr }}</p>
-              <p>전화번호: {{ user.phone_num }}</p>
+              <p>생년월일: {{ user.birth_date }}</p>
+              <p>주소: {{ user.address }}</p>
+              <p>전화번호: {{ user.phone_number }}</p>
             </div>
           </section>
 
@@ -333,10 +333,10 @@
       });
 
       // 수정 버튼
-      $(document).on('click', '.edit-btn', function(e){
+      $(document).on('click', '.edit-btn', function (e) {
         e.stopPropagation();
         var planNo = $(this).closest('.schedule-item').data('plan-no');
-        if(planNo) {
+        if (planNo) {
           // 수정 모드로 이동할 때 쿼리 파라미터 전달
           window.location.href = '/plan_schedule/?edit_plan=' + planNo;
         } else {
@@ -345,24 +345,24 @@
       });
 
       // 취소(삭제) 버튼
-      $(document).on('click', '.delete-btn', function(e){
+      $(document).on('click', '.delete-btn', function (e) {
         e.stopPropagation();
         var planItem = $(this).closest(".schedule-item");
         var planNo = planItem.data("plan-no");
-        if(confirm("정말 삭제하시겠습니까?")){
+        if (confirm("정말 삭제하시겠습니까?")) {
           $.ajax({
             url: "/schedule/" + planNo + "/delete/",
             type: "POST",
-            headers: { "X-CSRFToken": "{{ csrf_token }}" },
-            success: function(response){
-              if(response.status === "success"){
+            headers: {"X-CSRFToken": "{{ csrf_token }}"},
+            success: function (response) {
+              if (response.status === "success") {
                 alert(response.message);
                 planItem.remove();
               } else {
                 alert(response.message);
               }
             },
-            error: function(xhr){
+            error: function (xhr) {
               alert("삭제 중 오류 발생: " + (xhr.responseJSON ? xhr.responseJSON.message : "오류"));
             }
           });
@@ -370,12 +370,17 @@
       });
 
       // 일정 박스를 클릭하면 상세 보기(단, 편집 모드가 아닐 때만)
-      $(".schedule-item").click(function(){
-        if(!editMode){
+      $(".schedule-item").click(function () {
+        if (!editMode) {
           var planNo = $(this).data("plan-no");
           window.location.href = "/schedule/" + planNo + "/";
         }
       });
+      // 페이지 로드 시 "나의 일정" 섹션 활성화 문제 해결
+      // 이미 클릭된 상태면 display:block 보장
+      if (window.location.hash === "#my-plan") {
+        showSection('my-plan');
+      }
     });
   </script>
 </body>

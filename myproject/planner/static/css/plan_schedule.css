@@ -1,244 +1,346 @@
+/* 브라우저가 항상 세로 스크롤바를 보여주도록 설정 */
+html {
+  overflow-y: scroll;
+}
+
 /* 네비게이션 바 스타일 */
 .navbar {
-   margin-bottom: 50px;
-   background-color: white;
-   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 50px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 .navbar-brand {
-  font-weight: bold;
-  font-size: 1.5rem;
-  color: #0056b3;
+ font-weight: bold;
+ font-size: 1.5rem;
+ color: #0056b3;
 }
 .navbar-nav .nav-link {
-  font-size: 16px;
-  color: #333 !important;
+ font-size: 16px;
+ color: #333 !important;
 }
 .navbar-nav .nav-item .dropdown-menu {
-  min-width: 150px;
+ min-width: 150px;
 }
 
 /* 네비게이션 및 상단 바: margin 없이 붙임 */
 .navbar, .top-bar {
-  margin: 0;
+ margin: 0;
 }
 
 /* 고정된 nav 및 상단 바 */
 .fixed-nav {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  z-index: 1000;
+ position: fixed;
+ top: 0;
+ width: 100%;
+ z-index: 1000;
 }
 .top-bar.fixed-top {
-  position: fixed;
-  top: 56px; /* nav 높이 (예: 56px) 바로 아래 */
-  width: 100%;
-  z-index: 999;
+ position: fixed;
+ top: 70px; /* nav 높이 (예: 56px) 바로 아래 */
+ width: 100%;
+ z-index: 999;
+}
+/* 로그인 모달 스타일 */
+
+.modal-title{
+    text-align: center;
+    color: black;
+}
+.modal-content {
+  padding: 10px;
+  border-radius: 10px;
+
+}
+.modal-header {
+  color: white;
+  border-radius: 10px 10px 0 0;
+}
+/* 로그인 모달 내의 <b> 태그 색상 변경 */
+#loginModal b {
+  color: #ffffff;
+}
+.btn-primary2 {
+  background: #0057b3bf;
+  border: none;
+  border-radius: 11px;
+  margin: 0 auto;
+  height: 50px;
+}
+.btn-primary2:hover {
+  background: #0056b3;
+}
+.form-label { /* 이메일, 비밀번호 등... 레이블 */
+    font-weight: bold;
+    color: #333;
+}
+.form-control2 { /* 입력 받는 칸 */
+    margin-right: 20px;
+    border: none;
+    width: 100%;
+    border-bottom: 1px solid #ccc;
+    border-radius: 0;
+    background-color: transparent;
+    font-size: 0.95rem;
+    color: #333;
+    padding: 8px 0;
+}
+.form-control2:focus { /* 입력 하기 위해 마우스로 누르면 강조 되는 부분 */
+    border-bottom: 1px solid #007bff;
+    outline: none;
+    box-shadow: none;
+}
+.error-message {
+  color: red;
+  font-size: 0.9rem;
+  display: none;
 }
 
-/* 오프셋: nav + top-bar 높이만큼 본문 상단 여백 */
-.fixed-offset {
-  height: 106px; /* nav(56px) + top-bar(50px) */
+/* 이용방법 목록 스타일 */
+.modal-body ol {
+  padding-left: 20px;
 }
-
+.notice {
+  color: red;
+  text-decoration: underline;
+}
+.example-text {
+  color: grey;
+}
+.modal-content {
+    padding: 10px;
+    border-radius: 10px;
+}
 /* 상단 바 */
 .top-bar {
-  background-color: #f1f3f5;
-  border-bottom: 1px solid #dee2e6;
-  padding: 10px;
+ background-color: #f1f3f5;
+ border-bottom: 1px solid #dee2e6;
+ padding: 10px;
 }
 
 /* 동일한 높이/너비를 위한 클래스 */
 .equal-input {
-  height: 30px !important;
-  font-size: 0.9rem;
+ height: 30px !important;
+ font-size: 0.9rem;
 }
 
 /* 상단 바 내 입력 및 박스 */
 .top-bar input[type="text"],
 .top-bar input[type="date"],
 .day-selection-box {
-  /* margin-top을 줄여서 고정 위치 유지 */
-  margin-top: 10px;
-  height: 30px !important;
+ /* margin-top을 줄여서 고정 위치 유지 */
+ margin-top: 10px;
+ height: 30px !important;
+}
+
+/* 각 네모 박스에 대해 높이 550px, 내부 요소의 위치 기준을 설정 */
+.recommended-places,
+.selected-itinerary,
+.map-container {
+  position: relative;
+  height: 550px;
+}
+
+/* pagination-controls를 박스의 하단 중앙에 고정 */
+.pagination-controls {
+  position: absolute;
+  bottom: 10px; /* 박스 하단에서 10px 위 */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
 }
 
 /* 일정 선택 영역 (상단 바 내) - 단일 박스 (드롭다운) */
 .day-selection-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+ display: flex;
+ align-items: center;
+ justify-content: center;
 
-  padding: 0 5px;
-  width: 250px;
-  height: 50px; /* 고정 높이 */
-  overflow: hidden;
-  position: relative;
-  margin: 0 auto;
-  margin-top: 10px;
+ padding: 0 5px;
+ width: 250px;
+ height: 50px; /* 고정 높이 */
+ overflow: hidden;
+ position: relative;
+ margin: 0 auto;
+ margin-top: 10px;
 }
 .day-selection-box .selection-label {
-  font-size: 0.9rem;
-  margin-right: 5px;
-  flex-shrink: 0;
+ font-size: 0.9rem;
+ margin-right: 5px;
+ flex-shrink: 0;
 }
 
 /* 버튼 스타일 */
 .btn-primary {
-  margin-top: 10px;
-  background: #0057b3bf !important;
+ margin-top: 10px;
+ background: #0057b3bf !important;
 }
 .btn-primary:hover {
-  background: #0056b3 !important;
+ background: #0056b3 !important;
 }
 .custom-close {
-  margin-top: 10px;
+ margin-top: 10px;
 }
- /* 드롭다운 메뉴 기본 스타일은 Bootstrap 기본 스타일 사용 */
+/* 드롭다운 메뉴 기본 스타일은 Bootstrap 기본 스타일 사용 */
 /* 메인 콘텐츠 영역 */
 .main-container {
-  margin-top: 20px;
-  padding-top: 20px;
+ margin-top: 20px;
+ padding: 20px;
+ /* 아래쪽 여백 추가 */
+ margin-bottom: 400px; /* 또는 margin-bottom: 400px; */
 }
 
 /* 좌우 2분할 레이아웃 */
 .main-container .row > div {
-  padding-left: 10px;
-  box-sizing: border-box;
+ padding-left: 10px;
+ box-sizing: border-box;
 }
 .left-panel {
-  flex: 0 0 50%;
-  max-width: 50%;
+ flex: 0 0 50%;
+ max-width: 50%;
 }
 .right-panel {
-  flex: 0 0 50%;
-  max-width: 50%;
+ flex: 0 0 50%;
+ max-width: 50%;
 }
 
+pagination-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
 /* 추천 장소 영역 */
 .recommended-places {
-  background-color: #fff;
-  border: 1px solid #dee2e6;
-  border-radius: 5px;
-  padding: 15px;
-  min-height: 400px;
-  margin-bottom: 15px;
+ background-color: #fff;
+ border: 1px solid #dee2e6;
+ border-radius: 5px;
+ padding: 15px;
+ min-height: 400px;
+ margin-bottom: 15px;
+
 }
 .recommended-places .input-group {
-  gap: 10px;
+ gap: 10px;
 }
 #recommendSearch,
 #recommendSearchBtn {
-  border-radius: 4px !important;
+ border-radius: 4px !important;
 }
 .recommended-item {
-  position: relative; /* 내부 요소의 절대 위치 기준 */
+ position: relative; /* 내부 요소의 절대 위치 기준 */
 }
 .recommended-item span {
-  flex: 1;                 /* 남은 공간을 모두 사용 */
-  margin-right: 60px;      /* 버튼이 들어갈 공간 확보 (버튼 폭에 맞춰 조정) */
-  word-break: break-word;  /* 긴 단어도 줄바꿈되도록 */
+ flex: 1;                 /* 남은 공간을 모두 사용 */
+ margin-right: 60px;      /* 버튼이 들어갈 공간 확보 (버튼 폭에 맞춰 조정) */
+ word-break: break-word;  /* 긴 단어도 줄바꿈되도록 */
 }
 .recommended-item .btn-success.add-place {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+ position: absolute;
+ right: 10px;
+ top: 50%;
+ transform: translateY(-50%);
 }
 
 /* 추천 장소 이미지 */
 .recommended-item img.recommended-image {
-  width: 50px;
-  height: 50px;
-  max-width: 100px;
-  max-height: 70px;
-  margin-right: 10px;
-  object-fit: cover;
-  border-radius: 5px;
+ width: 50px;
+ height: 50px;
+ max-width: 100px;
+ max-height: 70px;
+ margin-right: 10px;
+ object-fit: cover;
+ border-radius: 5px;
 }
 
 /* 선택된 일정 영역 */
 .selected-itinerary {
-  background-color: #fff;
-  border: 1px solid #dee2e6;
-  border-radius: 5px;
-  padding: 15px;
-  min-height: 400px;
-  margin-bottom: 15px;
+ background-color: #fff;
+ border: 1px solid #dee2e6;
+ border-radius: 5px;
+ padding: 15px;
+ min-height: 400px;
+ margin-bottom: 15px;
 }
 .delete-btn{
-  background-color: #d9534f;
-  width: 30px;
- }
- .btn-success{
-  background-color: #198754;
-  width: 30px;
- }
+ background-color: #d9534f;
+ width: 30px;
+}
+.btn-success{
+ background-color: #198754;
+ width: 30px;
+}
 /* 일정 항목: 두 줄 구조로 고정 */
 .itinerary-item {
-  border-bottom: 1px solid #dee2e6;
-  padding: 10px 0;
+ border-bottom: 1px solid #dee2e6;
+ padding: 12px 0;
 }
 .itinerary-name {
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
+ font-weight: bold;
+ color: #333;
+ margin-bottom: 5px;
 }
 .itinerary-memo-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+ display: flex;
+ gap: 10px;
+ align-items: center;
 }
 .itinerary-memo-row .itinerary-memo {
-  flex: 1;
+ flex: 1;
 }
 
 /* 지도 영역의 검색 그룹 조정 */
 .map-container .d-flex.mb-2 {
-  display: flex;
+ display: flex;
 
-  border-radius: 4px !important;
+ border-radius: 4px !important;
 }
 #travelSearchInput {
-  flex: 2.7;
+ flex: 2.7;
+ border-radius: 5px 0 0 5px;
 }
 #travelSearchBtn {
-  flex: 0.3;
-}
-#travelSearchInput,
-#travelSearchBtn {
-  border-radius: 4px !important;
+ border-radius: 0 5px 5px 0;
+ flex: 0.3;
 }
 
 /* 지도 영역 */
 .map-container {
-  background-color: #fff;
-  border: 1px solid #dee2e6;
-  border-radius: 5px;
-  padding: 15px;
-  min-height: 400px;
+ background-color: #fff;
+ border: 1px solid #dee2e6;
+ border-radius: 5px;
+ padding: 15px;
+ min-height: 400px;
 }
 #map {
-  width: 100%;
-  height: 500px;
-  background-color: #e9ecef;
+ width: 100%;
+ height: 500px;
+ background-color: #e9ecef;
 }
 
 /* 반응형 */
 @media (max-width: 768px) {
-  .top-bar .row .col-auto {
-    margin-bottom: 10px;
-  }
-  #map {
-    height: 300px;
-  }
-  .main-container .row {
-    flex-direction: column;
-  }
-  .left-panel, .right-panel {
-    flex: 0 0 100%;
-    max-width: 100%;
-    margin-bottom: 15px;
-  }
+ .top-bar .row .col-auto {
+   margin-bottom: 10px;
+ }
+ #map {
+   height: 300px;
+ }
+ .main-container .row {
+   flex-direction: column;
+ }
+ .left-panel, .right-panel {
+   flex: 0 0 100%;
+   max-width: 100%;
+   margin-bottom: 15px;
+ }
+}
+
+footer {
+    background-color: #f8f9fa;
+    padding: 10px;
+    padding-top: 20px;
+    text-align: center;
+    border-top: 1px solid #dee2e6; /* 푸터 상단에 테두리 추가 */
 }
 

@@ -35,16 +35,16 @@ def main_page(request):
     return render(request, "planner/main_page.html", context)
 
 
-@csrf_protect
+@csrf_exempt
 def signup_view(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
         password_confirm = request.POST.get('password_confirm')
         name = request.POST.get('name')
-        birth = request.POST.get('birth')
-        addr = request.POST.get('addr')
-        phone_num = request.POST.get('phone_num')
+        birth_date = request.POST.get('birth_date')
+        address = request.POST.get('address')
+        phone_number = request.POST.get('phone_number')
 
         # 서버 측 검증
 
@@ -61,10 +61,7 @@ def signup_view(request):
         if password != password_confirm:
             return JsonResponse({'status': 'error', 'message': '비밀번호와 비밀번호 재확인이 일치하지 않습니다.'}, status=400)
 
-        # 중복 가입 검사:
-        # 만약 해당 이메일로 가입한 사용자가 있다면,
-        # - is_active가 True이면 이미 가입된 계정이므로 에러를 반환하고,
-        # - is_active가 False이면 해당 레코드를 업데이트하여 재가입(재활성화) 처리
+        # 중복 가입 검사
         try:
             existing_user = Signup.objects.get(email=email)
             if existing_user.is_active:
@@ -73,9 +70,9 @@ def signup_view(request):
                 # 탈퇴된 계정이면 업데이트하여 재가입 처리
                 existing_user.password = make_password(password)
                 existing_user.name = name
-                existing_user.birth = birth if birth else None
-                existing_user.addr = addr
-                existing_user.phone_num = phone_num
+                existing_user.birth_date = birth_date if birth_date else None
+                existing_user.address = address
+                existing_user.phone_number = phone_number
                 existing_user.is_active = True
                 existing_user.save()
                 return JsonResponse({'status': 'success', 'message': '회원가입 성공'})
@@ -85,9 +82,9 @@ def signup_view(request):
                 email=email,
                 password=make_password(password),
                 name=name,
-                birth=birth if birth else None,
-                addr=addr,
-                phone_num=phone_num,
+                birth_date=birth_date if birth_date else None,
+                address=address,
+                phone_number=phone_number,
                 is_active=True
             )
             return JsonResponse({'status': 'success', 'message': '회원가입 성공'})
@@ -95,7 +92,8 @@ def signup_view(request):
         return render(request, 'planner/signup.html')
 
 
-@csrf_protect
+
+@csrf_exempt
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -122,7 +120,7 @@ def logout_view(request):
     return redirect('main_page')
 
 
-@csrf_protect
+@csrf_exempt
 def password_reset_view(request):
     """
     비밀번호 찾기:
@@ -187,17 +185,17 @@ def my_page_view(request):
     except Signup.DoesNotExist:
         return redirect('login')
 
-    # Planner 테이블에는 직접 user 정보가 없으므로, PlannerDetail을 통해 연결된 Planner들을 가져옵니다.
-    planners = Planner.objects.filter(plannerdetail__signup=user).distinct()
+    # PlannerDetail을 통해 연결된 Planner들을 가져옵니다.
+    planners = Planner.objects.all().distinct()
     current_date = timezone.now().date()
 
-    # Planner.edate를 기준으로 다가올 여행 일정과 지난 여행 일정을 구분합니다.
-    upcoming_plans = planners.filter(edate__gte=current_date).order_by("sdate")
-    past_plans = planners.filter(edate__lt=current_date).order_by("-sdate")
+    # end_date를 기준으로 다가올 여행 일정과 지난 여행 일정을 구분
+    upcoming_plans = planners.filter(end_date__gte=current_date).order_by("start_date")
+    past_plans = planners.filter(end_date__lt=current_date).order_by("-start_date")
 
-    # 각 Planner에 대해 여행 제목은 PlannerDetail의 plan_name (예: "서울여행 - ...")에서 추출합니다.
+    # 각 Planner에 대해 여행 제목은 PlannerDetail의 plan_name에서 추출
     def get_travel_title(plan):
-        detail = plan.plannerdetail_set.order_by("wdate").first()
+        detail = plan.plannerdetail_set.order_by("written_date").first()
         if detail:
             return detail.plan_name
         return plan.region  # 없으면 지역명을 대체값으로 사용
@@ -205,22 +203,22 @@ def my_page_view(request):
     upcoming_list = []
     for plan in upcoming_plans:
         upcoming_list.append({
-            "plan_no": plan.plan_no,
+            "plan_no": plan.id,
             "travel_title": get_travel_title(plan),
-            "plan_img": plan.plan_img,
-            "sdate": plan.sdate,
-            "edate": plan.edate,
+            "plan_img": plan.plan_image,
+            "sdate": plan.start_date,
+            "edate": plan.end_date,
             "region": plan.region,
         })
 
     past_list = []
     for plan in past_plans:
         past_list.append({
-            "plan_no": plan.plan_no,
+            "plan_no": plan.id,
             "travel_title": get_travel_title(plan),
-            "plan_img": plan.plan_img,
-            "sdate": plan.sdate,
-            "edate": plan.edate,
+            "plan_img": plan.plan_image,
+            "sdate": plan.start_date,
+            "edate": plan.end_date,
             "region": plan.region,
         })
 
@@ -242,45 +240,43 @@ def my_schedule_view(request):
     except Signup.DoesNotExist:
         return redirect("login")
 
-    # Planner 테이블에는 직접 user 정보가 없으므로, PlannerDetail에서 연결된 Planner들을 가져옵니다.
-    # 각 PlannerDetail은 signup 필드를 가지고 있으므로, 사용자가 작성한 PlannerDetail을 통해 Planner를 추출합니다.
-    planners = Planner.objects.filter(plannerdetail__signup=user).distinct()
+    # PlannerDetail에서 연결된 Planner들을 가져옵니다.
+    planners = Planner.objects.filter(plannerdetail__user=user).distinct()
 
-    # 현재 날짜 (timezone.now()를 date()로 변환)
+    # 현재 날짜
     current_date = timezone.now().date()
 
-    # Planner.edate(여행 종료일)을 기준으로 다가올 여행과 과거 여행을 구분합니다.
-    upcoming_plans = planners.filter(edate__gte=current_date).order_by("sdate")
-    past_plans = planners.filter(edate__lt=current_date).order_by("-sdate")
+    # end_date 기준으로 다가올 여행과 과거 여행 구분
+    upcoming_plans = planners.filter(end_date__gte=current_date).order_by("start_date")
+    past_plans = planners.filter(end_date__lt=current_date).order_by("-start_date")
 
-    # 각 Planner에 대해 여행 제목을 추출합니다.
-    # PlannerDetail의 plan_name은 "여행제목 - ..." 형태로 생성되었다고 가정합니다.
+    # 각 Planner에 대해 여행 제목 추출
     def get_travel_title(plan):
-        detail = plan.plannerdetail_set.order_by("wdate").first()
+        detail = plan.plannerdetail_set.order_by("written_date").first()
         if detail:
             return detail.plan_name
         return plan.region  # 없으면 지역명을 대체값으로 사용
 
-    # 여행 목록을 리스트 형태로 준비합니다.
+    # 여행 목록 준비
     upcoming_list = []
     for plan in upcoming_plans:
         upcoming_list.append({
-            "plan_no": plan.plan_no,
+            "plan_no": plan.id,
             "travel_title": get_travel_title(plan),
-            "plan_img": plan.plan_img,  # 이미지 경로; 없으면 템플릿에서 기본 이미지를 처리
-            "sdate": plan.sdate,
-            "edate": plan.edate,
+            "plan_img": plan.plan_image,  # 이미지 경로
+            "sdate": plan.start_date,
+            "edate": plan.end_date,
             "region": plan.region,
         })
 
     past_list = []
     for plan in past_plans:
         past_list.append({
-            "plan_no": plan.plan_no,
+            "plan_no": plan.id,
             "travel_title": get_travel_title(plan),
-            "plan_img": plan.plan_img,
-            "sdate": plan.sdate,
-            "edate": plan.edate,
+            "plan_img": plan.plan_image,
+            "sdate": plan.start_date,
+            "edate": plan.end_date,
             "region": plan.region,
         })
 
@@ -297,20 +293,20 @@ def schedule_detail_view(request, plan_no):
     특정 일정(Planner)의 상세 내용을 보여주는 페이지입니다.
 
     PlannerDetail 테이블의 모든 항목을 해당 Planner에 대해 조회하고,
-    wdate(일정 날짜)를 기준으로 그룹화하여 각 날짜별 일정 목록을 템플릿에 전달합니다.
+    written_date(작성일) 또는 actual_date(실제 날짜)를 기준으로 그룹화하여 각 날짜별 일정 목록을 템플릿에 전달합니다.
 
     템플릿에서는 Planner(여행 일정) 정보와 함께, 각 날짜별(예: DAY 1, DAY 2, …) 일정 항목(관광지명, 메모 등)을 리스트 형태로 표시합니다.
     """
     # plan_no로 Planner 객체를 가져옵니다. (없으면 404)
-    planner = get_object_or_404(Planner, plan_no=plan_no)
+    planner = get_object_or_404(Planner, id=plan_no)
 
-    # 해당 Planner에 연결된 PlannerDetail 항목들을 wdate 기준 오름차순으로 조회합니다.
-    details = PlannerDetail.objects.filter(planner=planner).order_by('wdate')
+    # 해당 Planner에 연결된 PlannerDetail 항목들을 actual_date 기준 오름차순으로 조회합니다.
+    details = PlannerDetail.objects.filter(planner=planner).order_by('actual_date')
 
-    # wdate(일정 날짜)를 기준으로 PlannerDetail 항목들을 그룹화합니다.
+    # actual_date(실제 날짜)를 기준으로 PlannerDetail 항목들을 그룹화합니다.
     itinerary_by_day = {}
     for detail in details:
-        day = detail.wdate  # detail.wdate는 date 타입입니다.
+        day = detail.actual_date if detail.actual_date else detail.written_date.date()
         itinerary_by_day.setdefault(day, []).append(detail)
 
     # 그룹화된 날짜들을 정렬합니다.
@@ -323,7 +319,8 @@ def schedule_detail_view(request, plan_no):
     }
     return render(request, "planner/schedule_detail.html", context)
 
-@csrf_protect
+
+@csrf_exempt
 def update_profile_view(request):
     """
     회원정보 수정: 로그인한 사용자의 정보를 업데이트합니다.
@@ -339,11 +336,11 @@ def update_profile_view(request):
 
     if request.method == 'POST':
         user.name = request.POST.get('name', user.name)
-        user.addr = request.POST.get('addr', user.addr)
-        user.phone_num = request.POST.get('phone_num', user.phone_num)
-        birth = request.POST.get('birth')
-        if birth:
-            user.birth = birth
+        user.address = request.POST.get('address', user.address)
+        user.phone_number = request.POST.get('phone_number', user.phone_number)
+        birth_date = request.POST.get('birth_date')
+        if birth_date:
+            user.birth_date = birth_date
 
         # 새 비밀번호 업데이트 (선택적)
         new_password = request.POST.get('new_password')
@@ -354,7 +351,8 @@ def update_profile_view(request):
             # 비밀번호 형식 검증: 8~16자, 영문 대소문자, 숫자, 특수문자 포함
             var_password_pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};\'":\\|,.<>\/?]).{8,16}$'
             if not re.match(var_password_pattern, new_password):
-                return JsonResponse({"status": "error", "message": "새 비밀번호는 8~16자 영문 대소문자, 숫자, 특수문자를 포함해야 합니다."},
+                return JsonResponse({"status": "error",
+                                     "message": "새 비밀번호는 8~16자 영문 대소문자, 숫자, 특수문자를 포함해야 합니다."},
                                     status=400)
             user.password = make_password(new_password)
 
@@ -364,7 +362,7 @@ def update_profile_view(request):
         return render(request, 'planner/update_profile.html', {'user': user})
 
 
-@csrf_protect
+@csrf_exempt
 def delete_profile_view(request):
     """
     회원탈퇴: 로그인한 사용자가 자신의 회원정보를 탈퇴 처리합니다.
@@ -692,7 +690,7 @@ def plan_schedule_view(request):
 openai.api_key = os.getenv("OPENAI_API_KEY")
 logger = logging.getLogger(__name__)
 
-@csrf_protect
+@csrf_exempt
 def chatbot(request):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
@@ -727,7 +725,7 @@ def chatbot(request):
         logger.error(f"Chatbot Error: {e}")  # 서버 로그에 오류 기록
         return JsonResponse({"reply": f"서버 오류 발생: {str(e)}"}, status=500)
 
-@csrf_protect
+@csrf_exempt
 def save_schedule_view(request):
     if request.method == "POST":
         try:
@@ -739,7 +737,7 @@ def save_schedule_view(request):
         start_date = data.get("start_date")
         end_date = data.get("end_date")
         destination = data.get("destination")
-        itineraries = data.get("itineraries", {})  # 예: {"1": [ {...}, {...} ], "2": [ ... ], ...}
+        itineraries = data.get("itineraries", {})  # {"1": [ {...}, {...} ], "2": [ ... ], ...}
 
         if not all([travel_title, start_date, end_date, destination]):
             return JsonResponse({"status": "error", "message": "필수 필드가 누락되었습니다."}, status=400)
@@ -752,73 +750,68 @@ def save_schedule_view(request):
         except Signup.DoesNotExist:
             return JsonResponse({"status": "error", "message": "회원 정보를 찾을 수 없습니다."}, status=400)
 
-        # 수정 모드 여부 확인 (edit_plan 값이 있으면 기존 일정 업데이트)
         edit_plan = data.get("edit_plan")
         if edit_plan:
+            # 수정 모드: 기존 Planner 업데이트
             planner = get_object_or_404(Planner, plan_no=edit_plan)
             planner.region = destination
-            planner.sdate = start_date
-            planner.edate = end_date
+            planner.start_date = start_date
+            planner.end_date = end_date
             planner.save()
-            # 기존 세부 일정 삭제
             PlannerDetail.objects.filter(planner=planner).delete()
         else:
+            # 신규 일정 생성
             planner = Planner.objects.create(
                 region=destination,
-                plan_img="",
-                sdate=start_date,
-                edate=end_date
+                plan_image="",
+                start_date=start_date,
+                end_date=end_date
             )
 
         try:
-            start_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
+            start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
         except ValueError:
             return JsonResponse({"status": "error", "message": "시작일 형식이 올바르지 않습니다."}, status=400)
 
-        # 각 DAY별 itinerary 항목에 대해 PlannerDetail 레코드 생성
+        # DAY별 itinerary 처리
         for day, items in itineraries.items():
             try:
                 day_int = int(day)
             except ValueError:
                 continue
-            # 실제 날짜 계산: DAY 1은 시작일, DAY 2는 시작일+1일 등
-            calculated_date = start_date_obj + timedelta(days=day_int - 1)
-            wdate_str = calculated_date.strftime("%Y-%m-%d")  # 실제 날짜 문자열
-
-            for index, item in enumerate(items, start=1):
+            calculated_date = start_date_obj + timedelta(days=day_int - 1)  # 실제 날짜
+            for item in items:
                 tour_title = item.get("name")
                 if not tour_title:
                     continue
-                try:
-                    tour = Tourlist.objects.get(title=tour_title)
-                except Tourlist.DoesNotExist:
-                    tour = Tourlist.objects.create(
-                        title=tour_title,
-                        addr1=item.get("address", ""),
-                        areacode=None,
-                        sigungucode=None,
-                        image2="",
-                        readcount=0,
-                        ping=0,
-                    )
+                tour, created = Tourlist.objects.get_or_create(
+                    title=tour_title,
+                    defaults={
+                        "addr1": item.get("address", ""),
+                        "areacode": None,
+                        "sigungucode": None,
+                        "image2": "",
+                        "readcount": 0,
+                        "ping": 0,
+                    }
+                )
                 memo_value = item.get("memo", "")
-                # 여기서 wdate는 "DAY {day}"로 표시용, actual_date는 실제 날짜를 저장합니다.
                 PlannerDetail.objects.create(
                     plan_name=travel_title,
                     planner=planner,
                     signup=user,
                     title=tour,
-                    wdate=f"DAY {day}",       # 표시용 텍스트
-                    actual_date=wdate_str,     # 실제 날짜 데이터 (YYYY-MM-DD)
+                    wdate=f"DAY {day}",       # 표시용
+                    actual_date=calculated_date,  # DateField에 맞게 date 타입 저장
                     memo=memo_value
                 )
+
         return JsonResponse({"status": "success", "message": "일정이 저장되었습니다."})
     else:
         return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
 
 
-
-@csrf_protect
+@csrf_exempt
 def update_destination_view(request):
     """
     AJAX GET 요청으로 전달된 destination을 기반으로,
@@ -921,7 +914,7 @@ def update_destination_view(request):
         "recommended_places": recommended_places
     })
 
-@csrf_protect
+@csrf_exempt
 def schedule_delete_view(request, plan_no):
     user_email = request.session.get("user_email")
     if not user_email:
@@ -942,76 +935,111 @@ def feed_main(request):
     if not user_email:
         return JsonResponse({"status": "error", "message": "로그인이 필요합니다."}, status=401)
 
+    try:
+        user = Signup.objects.get(email=user_email)
+    except Signup.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "회원 정보를 찾을 수 없습니다."}, status=400)
+
     feed_object_list = Feed.objects.all().order_by('-id')
     feed_list = []
+
     for feed in feed_object_list:
-        # feed.author는 Signup 인스턴스
-        user_feed = feed.author
+        user_feed = feed.author  # Signup 인스턴스
         reply_object_list = Reply.objects.filter(feed=feed)
         reply_list = []
+
         for reply in reply_object_list:
             reply_author = reply.author
             reply_list.append({
                 "reply_content": reply.reply_content,
                 "nickname": reply_author.name if reply_author else "",
             })
+
         like_count = Like.objects.filter(feed=feed, is_like=True).count()
-        is_liked = Like.objects.filter(feed=feed, author=user_email, is_like=True).exists()
-        is_marked = Bookmark.objects.filter(feed=feed, author=user_email, is_marked=True).exists()
+        is_liked = Like.objects.filter(feed=feed, author=user, is_like=True).exists()
+        is_marked = Bookmark.objects.filter(feed=feed, author=user, is_marked=True).exists()
+
         feed_list.append({
             "id": feed.id,
             "image": feed.image.url if feed.image else "",
             "content": feed.content,
             "like_count": like_count,
-            "profile_image": "",  # 기본 프로필 이미지가 없는 경우
+            "profile_image": "",  # 기본 프로필 이미지 처리 가능
             "nickname": user_feed.name if user_feed else "",
             "reply_list": reply_list,
             "is_liked": is_liked,
             "is_marked": is_marked,
         })
 
-    return render(request, "planner/feed_main.html", context={"feeds": feed_list, "user": user_email})
+    context = {
+        "feeds": feed_list,
+        "user": user_email,
+    }
+
+    return render(request, "planner/feed_main.html", context)
+
 
 # 피드 업로드: POST 요청 시 이미지 파일과 글 내용을 저장
 def upload_feed(request):
-    if request.method == "POST":
-        file = request.FILES.get('file')
-        if not file:
-            return JsonResponse({"status": "error", "message": "파일이 없습니다."}, status=400)
-        uuid_name = uuid4().hex
-        save_path = os.path.join(settings.MEDIA_ROOT, 'feed_images', uuid_name)
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        with open(save_path, 'wb+') as destination:
-            for chunk in file.chunks():
-                destination.write(chunk)
-        content_text = request.POST.get('content', '')
-        email = request.session.get('user_email')
-        if not email:
-            return JsonResponse({"status": "error", "message": "로그인이 필요합니다."}, status=401)
-        user = Signup.objects.filter(email=email).first()
-        if not user:
-            return JsonResponse({"status": "error", "message": "회원 정보를 찾을 수 없습니다."}, status=400)
-        Feed.objects.create(author=user, image='feed_images/' + uuid_name, content=content_text)
-        return JsonResponse({"status": "success"}, status=200)
-    return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
+
+    file = request.FILES.get('file')
+    if not file:
+        return JsonResponse({"status": "error", "message": "파일이 없습니다."}, status=400)
+
+    content_text = request.POST.get('content', '')
+    email = request.session.get('user_email')
+    if not email:
+        return JsonResponse({"status": "error", "message": "로그인이 필요합니다."}, status=401)
+
+    user = get_object_or_404(Signup, email=email)
+
+    # 파일 저장
+    uuid_name = uuid4().hex
+    save_dir = os.path.join(settings.MEDIA_ROOT, 'feed_images')
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, uuid_name)
+
+    with open(save_path, 'wb+') as destination:
+        for chunk in file.chunks():
+            destination.write(chunk)
+
+    # Feed 생성
+    Feed.objects.create(
+        author=user,
+        image='feed_images/' + uuid_name,
+        content=content_text
+    )
+
+    return JsonResponse({"status": "success"}, status=200)
 
 # 댓글 업로드: POST 요청 시 댓글 저장
 def upload_reply(request):
-    if request.method == "POST":
-        feed_id = request.POST.get("feed_id")
-        reply_content = request.POST.get("reply_content")
-        email = request.session.get("user_email")
-        if not feed_id or not reply_content or not email:
-            return JsonResponse({"status": "error", "message": "필요한 데이터가 누락되었습니다."}, status=400)
-        user = Signup.objects.filter(email=email).first()
-        if not user:
-            return JsonResponse({"status": "error", "message": "회원 정보를 찾을 수 없습니다."}, status=400)
-        feed = Feed.objects.filter(id=feed_id).first()
-        if not feed:
-            return JsonResponse({"status": "error", "message": "피드를 찾을 수 없습니다."}, status=404)
-        Reply.objects.create(feed=feed, reply_content=reply_content, author=user)
-        return JsonResponse({"status": "success"}, status=200)
-    return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
+
+    feed_id = request.POST.get("feed_id")
+    reply_content = request.POST.get("reply_content")
+    email = request.session.get("user_email")
+
+    if not feed_id or not reply_content or not email:
+        return JsonResponse({"status": "error", "message": "필요한 데이터가 누락되었습니다."}, status=400)
+
+    # 로그인 사용자 가져오기
+    user = get_object_or_404(Signup, email=email)
+
+    # 피드 가져오기
+    feed = get_object_or_404(Feed, id=feed_id)
+
+    # Reply 생성
+    Reply.objects.create(
+        feed=feed,
+        reply_content=reply_content,
+        author=user
+    )
+
+    return JsonResponse({"status": "success"}, status=200)
 
 # 좋아요 토글 기능
 def toggle_like(request):
@@ -1063,7 +1091,7 @@ def toggle_bookmark(request):
         return JsonResponse({"status": "success"}, status=200)
     return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
 
-@csrf_protect
+@csrf_exempt
 def comment_reply(request, parent_id):
     if request.method == "POST":
         user_email = request.session.get("user_email")
@@ -1099,7 +1127,7 @@ def comment_reply(request, parent_id):
         return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
 
 
-@csrf_protect
+@csrf_exempt
 def comment_update(request, comment_id):
     if request.method == "POST":
         user_email = request.session.get("user_email")
@@ -1133,7 +1161,7 @@ def comment_update(request, comment_id):
         return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
 
 
-@csrf_protect
+@csrf_exempt
 def comment_delete(request, comment_id):
     if request.method == "POST":
         user_email = request.session.get("user_email")

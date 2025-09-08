@@ -59,20 +59,18 @@
       </div>
     </div>
   </nav>
+
   <!-- 이용방법 모달 -->
   <div class="modal fade" id="usageModal" tabindex="-1" aria-labelledby="usageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 800px;">
       <div class="modal-content">
         <div class="modal-header">
           <h3 class="modal-title text-center w-100" id="usageModalLabel">이용방법</h3>
-          <!-- 오른쪽 상단 X 버튼으로만 닫기 가능 -->
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
         </div>
         <div class="modal-body text-center">
-          <!-- 중앙 로고 -->
           <img src="{% static 'images/logo4.png' %}" alt="Logo" class="img-fluid"
                style="max-width:150px; margin-bottom:20px;">
-          <!-- 인덱스가 부여된 이용방법 목록 -->
           <ol class="text-start">
             <li>로그인 후, 원하는 국내 여행지를 검색 또는 선택합니다.</li>
             <li>여행 제목을 입력하고 여행 일정을 선택합니다.</li>
@@ -88,55 +86,36 @@
           </ol>
         </div>
         <div class="modal-footer">
-          <!-- 체크박스 (하루 동안 보지 않기) -->
           <div class="form-check">
             <input type="checkbox" class="form-check-input" id="hideOneDayCheck">
             <label class="form-check-label" for="hideOneDayCheck">하루 동안 보지 않기</label>
           </div>
-          <!-- 하단 닫기 버튼 제거됨. 모달 닫기는 상단 X 버튼만 사용 -->
         </div>
       </div>
     </div>
   </div>
-  <!-- 마이페이지 콘텐츠 영역 (고정폭/고정높이 레이아웃) -->
+
+  <!-- 마이페이지 콘텐츠 -->
   <div class="container-fluid mt-5">
     <div class="fixed-container">
-      <!-- 상단 제목 영역 -->
       <div class="fixed-header">
         <h2>마이페이지</h2>
       </div>
-      <!-- 좌우 내용 영역 -->
       <div class="fixed-content">
-        <!-- 왼쪽 사이드 메뉴 (고정폭 300px) -->
+        <!-- 사이드 메뉴 -->
         <div class="side-nav" style="width:300px;">
           <h4 class="side-nav-title">내 정보</h4>
           <ul class="list-unstyled">
-            <li>
-              <!-- 기본 정보 링크를 기본 활성화 -->
-              <a href="#basic-info" onclick="showSection('basic-info', event); return false;" class="active">
-                기본 정보
-              </a>
-            </li>
-            <li>
-              <a href="#my-plan" onclick="showSection('my-plan', event); return false;">
-                나의 일정
-              </a>
-            </li>
-            <li>
-              <a href="#update" onclick="showSection('update', event); return false;">
-                회원 정보 수정
-              </a>
-            </li>
-            <li>
-              <a href="#delete" onclick="showSection('delete', event); return false;">
-                회원탈퇴
-              </a>
-            </li>
+            <li><a href="#basic-info" onclick="showSection('basic-info', event); return false;" class="active">기본 정보</a></li>
+            <li><a href="#my-plan" onclick="showSection('my-plan', event); return false;">나의 일정</a></li>
+            <li><a href="#update" onclick="showSection('update', event); return false;">회원 정보 수정</a></li>
+            <li><a href="#delete" onclick="showSection('delete', event); return false;">회원탈퇴</a></li>
           </ul>
         </div>
-        <!-- 오른쪽 본문 영역 (고정폭 900px) -->
+
+        <!-- 본문 -->
         <div class="main-content" style="width:900px;">
-          <!-- 기본 정보: 처음에 표시 -->
+          <!-- 기본 정보 -->
           <section id="basic-info" style="display:block;">
             <div class="info-wrapper">
               <h3>기본 정보</h3>
@@ -148,7 +127,7 @@
             </div>
           </section>
 
-          <!-- '나의 일정' 섹션: 처음에는 숨김 -->
+          <!-- 나의 일정 -->
           <section id="my-plan" style="display:none;">
             <div class="schedule-wrapper">
               <h3>나의 일정</h3>
@@ -156,71 +135,76 @@
                 <p>등록된 여행 일정이 없습니다.</p>
                 <a href="{% url 'plan_schedule' %}" class="btn btn-primary">일정 만들기</a>
               {% else %}
-                <!-- 다가올 여행 일정 + 편집 버튼 같은 줄에 배치 -->
+                <!-- 다가올 여행 일정 -->
                 <div class="d-flex justify-content-between align-items-center mb-3">
                   <h5 class="mb-0">다가올 여행 일정</h5>
-                  <!-- 편집 버튼 -->
                   <button type="button" id="toggleEditMode" class="btn btn-warning btn-sm edit-mode-btn">편집</button>
                 </div>
 
-                {% if upcoming_plans|length == 0 %}
-                  <p>다가올 여행 일정이 없습니다.</p>
-                {% else %}
+                {% if upcoming_plans %}
                   {% for plan in upcoming_plans %}
                     <div class="schedule-item mb-4" data-plan-no="{{ plan.plan_no }}">
+                      {% if plan.plan_img %}
+                        <img src="{{ plan.plan_img.url }}" alt="{{ plan.travel_title }}" style="max-width:150px;">
+                      {% else %}
+                        <img src="{% static 'images/logo4.png' %}" alt="기본 이미지" style="max-width:150px;">
+                      {% endif %}
                       <div class="schedule-info">
                         <h6><b>{{ plan.travel_title }}</b></h6>
                         <p>{{ plan.sdate|date:"Y년 n월 j일" }} ~ {{ plan.edate|date:"Y년 n월 j일" }}</p>
-<!--                        <p>{{ plan.region }}</p>-->
                       </div>
-                      <!-- 수정/취소 버튼 (editMode가 true일 때만 .schedule-item.editable 적용) -->
                       <div class="action-btns">
                         <button type="button" class="btn btn-primary btn-sm edit-btn">수정</button>
                         <button type="button" class="btn btn-danger btn-sm delete-btn">삭제</button>
                       </div>
                     </div>
                   {% endfor %}
+                {% else %}
+                  <p>다가올 여행 일정이 없습니다.</p>
                 {% endif %}
 
-                <!-- 지난 일정 -->
+                <!-- 지난 여행 일정 -->
                 <h5>지난 여행 일정</h5>
-                {% if past_plans|length == 0 %}
-                  <p>지난 여행 일정이 없습니다.</p>
-                {% else %}
+                {% if past_plans %}
                   {% for plan in past_plans %}
                     <div class="schedule-item mb-4" data-plan-no="{{ plan.plan_no }}">
+                      {% if plan.plan_img %}
+                        <img src="{{ plan.plan_img.url }}" alt="{{ plan.travel_title }}" style="max-width:150px;">
+                      {% else %}
+                        <img src="{% static 'images/logo4.png' %}" alt="기본 이미지" style="max-width:150px;">
+                      {% endif %}
                       <div class="schedule-info">
                         <h6><b>{{ plan.travel_title }}</b></h6>
                         <p>{{ plan.sdate|date:"Y년 n월 j일" }} ~ {{ plan.edate|date:"Y년 n월 j일" }}</p>
-<!--                        <p>{{ plan.region }}</p>-->
                       </div>
                       <div class="action-btns">
                         <button type="button" class="btn btn-primary btn-sm edit-btn">수정</button>
-                        <button type="button" class="btn btn-danger btn-sm delete-btn">취소</button>
+                        <button type="button" class="btn btn-danger btn-sm delete-btn">삭제</button>
                       </div>
                     </div>
                   {% endfor %}
+                {% else %}
+                  <p>지난 여행 일정이 없습니다.</p>
                 {% endif %}
+
                 <hr>
                 <a href="{% url 'plan_schedule' %}" class="btn btn-primary">새 일정 만들기</a>
               {% endif %}
             </div>
           </section>
 
-          <!-- 회원 정보 수정 섹션 -->
+          <!-- 회원 정보 수정 -->
           <section id="update" style="display:none;">
-            <div id="updateProfileContainer">
-              <!-- update_profile.html 부분 템플릿이 AJAX로 로드됩니다 -->
-            </div>
+            <div id="updateProfileContainer"></div>
           </section>
 
-          <!-- 회원탈퇴 섹션 -->
+          <!-- 회원 탈퇴 -->
           <section id="delete" style="display:none;">
             <div class="delete-wrapper">
               <h3>회원 탈퇴</h3>
               <h5>회원 탈퇴를 하기 전에 꼭 확인해 주세요.</h5>
-              <p>탈퇴 후 회원정보 및 이용기록이 모두 삭제되며,
-                <br><span class="delete-warning">삭제된 데이터는 복구되지 않습니다.</span></p>
+              <p>탈퇴 후 회원정보 및 이용기록이 모두 삭제되며,<br>
+                <span class="delete-warning">삭제된 데이터는 복구되지 않습니다.</span></p>
               <a href="{% url 'delete_profile' %}" class="btn btn-danger">회원탈퇴</a>
             </div>
           </section>
@@ -228,7 +212,6 @@
       </div>
     </div>
   </div>
-
    <!-- 푸터 -->
   <footer class="text-center py-3">
     <img src="{% static 'images/logo4.png' %}" alt="Logo" style="height: 50px;">

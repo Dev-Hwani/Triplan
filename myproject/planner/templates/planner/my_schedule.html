@@ -66,7 +66,11 @@
       {% if upcoming_plans %}
         {% for plan in upcoming_plans %}
           <div class="schedule-item" onclick="location.href='/schedule/{{ plan.plan_no }}/'">
-            <img src="{% if plan.plan_img %}{% static plan.plan_img %}{% else %}{% static 'images/default_trip.jpg' %}{% endif %}" alt="{{ plan.travel_title }}">
+            {% if plan.plan_img %}
+              <img src="{{ plan.plan_img.url }}" alt="{{ plan.travel_title }}">
+            {% else %}
+              <img src="{% static 'images/default_trip.jpg' %}" alt="기본 이미지">
+            {% endif %}
             <div class="schedule-info">
               <h5>{{ plan.travel_title }}</h5>
               <p>{{ plan.sdate }} ~ {{ plan.edate }}</p>
@@ -85,7 +89,11 @@
       {% if past_plans %}
         {% for plan in past_plans %}
           <div class="schedule-item" onclick="location.href='/schedule/{{ plan.plan_no }}/'">
-            <img src="{% if plan.plan_img %}{% static plan.plan_img %}{% else %}{% static 'images/default_trip.jpg' %}{% endif %}" alt="{{ plan.travel_title }}">
+            {% if plan.plan_img %}
+              <img src="{{ plan.plan_img.url }}" alt="{{ plan.travel_title }}">
+            {% else %}
+              <img src="{% static 'images/default_trip.jpg' %}" alt="기본 이미지">
+            {% endif %}
             <div class="schedule-info">
               <h5>{{ plan.travel_title }}</h5>
               <p>{{ plan.sdate }} ~ {{ plan.edate }}</p>

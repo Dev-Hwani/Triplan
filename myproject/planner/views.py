@@ -186,7 +186,7 @@ def my_page_view(request):
         return redirect('login')
 
     # PlannerDetail을 통해 연결된 Planner들을 가져옵니다.
-    planners = Planner.objects.all().distinct()
+    planners = Planner.objects.filter(plannerdetail__user=user).distinct()
     current_date = timezone.now().date()
 
     # end_date를 기준으로 다가올 여행 일정과 지난 여행 일정을 구분
@@ -429,7 +429,7 @@ def plan_schedule_view(request):
 
         if edit_plan:
             # 수정 모드: 기존 Planner 업데이트
-            planner = get_object_or_404(Planner, plan_no=edit_plan)
+            planner = get_object_or_404(Planner, id=edit_plan)
             planner.region = destination
             planner.sdate = start_date
             planner.edate = end_date
@@ -491,18 +491,18 @@ def plan_schedule_view(request):
         # GET 요청 처리
         edit_plan = request.GET.get("edit_plan")
         if edit_plan:
-            planner = get_object_or_404(Planner, plan_no=edit_plan)
-            details = PlannerDetail.objects.filter(planner=planner).order_by('wdate')
+            planner = get_object_or_404(Planner, id=edit_plan)
+            details = PlannerDetail.objects.filter(planner=planner).order_by('actual_date')
             travel_title = details.first().plan_name if details.exists() else planner.region
             itineraries = {}
-            if planner.sdate:
-                start_date_obj = planner.sdate  # 이미 date 타입입니다.
+            if planner.start_date:
+                start_date_obj = planner.start_date  # 이미 date 타입입니다.
                 for detail in details:
                     if detail.actual_date:  # actual_date 필드 사용
                         day_num = (detail.actual_date - start_date_obj).days + 1
                         itineraries.setdefault(day_num, []).append({
-                            "name": detail.title.title,
-                            "address": detail.title.addr1,
+                            "name": detail.tourlist.title,
+                            "address": detail.tourlist.address,
                             "memo": detail.memo,
                         })
             # 추천 장소 로직 (수정 모드에서는 기존 Planner.region 사용)
@@ -537,7 +537,7 @@ def plan_schedule_view(request):
                             "lat": place["geometry"]["location"]["lat"],
                             "lng": place["geometry"]["location"]["lng"],
                         })
-                api_url = "http://apis.data.go.kr/B551011/KorService1/searchKeyword1"
+                api_url = "http://apis.data.go.kr/B551011/KorService2/searchKeyword2"
                 params = {
                     "serviceKey": KTO_API_KEY,
                     "keyword": dest,
@@ -585,8 +585,8 @@ def plan_schedule_view(request):
             context = {
                 "edit_plan": edit_plan,  # 수정 모드에서는 Planner의 plan_no를 전달
                 "travel_title": travel_title,
-                "start_date": planner.sdate,
-                "end_date": planner.edate,
+                "start_date": planner.start_date,
+                "end_date": planner.end_date,
                 "destination": planner.region,
                 "itineraries": json.dumps(itineraries),
                 "recommended_places": recommended_places,
@@ -618,20 +618,20 @@ def plan_schedule_view(request):
                             "lng": place["geometry"]["location"]["lng"],
                         })
                 # 2. Google Places API - Nearby Search
-                # if search_lat and search_lng:
-                #     nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={search_lat},{search_lng}&radius=2000&language=ko&key={GOOGLE_MAPS_API_KEY}"
-                #     nearby_response = requests.get(nearby_url)
-                #     nearby_places = nearby_response.json()
-                #     for place in nearby_places.get("results", []):
-                #         recommended_places.append({
-                #             "name": place["name"],
-                #             "address": place.get("vicinity", ""),
-                #             "description": place.get("types", []),
-                #             "lat": place["geometry"]["location"]["lat"],
-                #             "lng": place["geometry"]["location"]["lng"],
-                #         })
+                if search_lat and search_lng:
+                    nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={search_lat},{search_lng}&radius=2000&language=ko&key={GOOGLE_MAPS_API_KEY}"
+                    nearby_response = requests.get(nearby_url)
+                    nearby_places = nearby_response.json()
+                    for place in nearby_places.get("results", []):
+                        recommended_places.append({
+                            "name": place["name"],
+                            "address": place.get("vicinity", ""),
+                            "description": place.get("types", []),
+                            "lat": place["geometry"]["location"]["lat"],
+                            "lng": place["geometry"]["location"]["lng"],
+                        })
                 # 3. 한국관광공사 API
-                api_url = "http://apis.data.go.kr/B551011/KorService1/searchKeyword1"
+                api_url = "http://apis.data.go.kr/B551011/KorService2/searchKeyword2"
                 params = {
                     "serviceKey": KTO_API_KEY,
                     "keyword": destination,
@@ -737,7 +737,7 @@ def save_schedule_view(request):
         start_date = data.get("start_date")
         end_date = data.get("end_date")
         destination = data.get("destination")
-        itineraries = data.get("itineraries", {})  # {"1": [ {...}, {...} ], "2": [ ... ], ...}
+        itineraries = data.get("itineraries", {})
 
         if not all([travel_title, start_date, end_date, destination]):
             return JsonResponse({"status": "error", "message": "필수 필드가 누락되었습니다."}, status=400)
@@ -753,7 +753,7 @@ def save_schedule_view(request):
         edit_plan = data.get("edit_plan")
         if edit_plan:
             # 수정 모드: 기존 Planner 업데이트
-            planner = get_object_or_404(Planner, plan_no=edit_plan)
+            planner = get_object_or_404(Planner, id=edit_plan)
             planner.region = destination
             planner.start_date = start_date
             planner.end_date = end_date
@@ -779,7 +779,7 @@ def save_schedule_view(request):
                 day_int = int(day)
             except ValueError:
                 continue
-            calculated_date = start_date_obj + timedelta(days=day_int - 1)  # 실제 날짜
+            calculated_date = start_date_obj + timedelta(days=day_int - 1)
             for item in items:
                 tour_title = item.get("name")
                 if not tour_title:
@@ -787,29 +787,27 @@ def save_schedule_view(request):
                 tour, created = Tourlist.objects.get_or_create(
                     title=tour_title,
                     defaults={
-                        "addr1": item.get("address", ""),
-                        "areacode": None,
-                        "sigungucode": None,
-                        "image2": "",
-                        "readcount": 0,
-                        "ping": 0,
+                        "address": item.get("address", ""),
+                        "area_code": None,
+                        "sigungu_code": None,
+                        "image": "",
+                        "read_count": 0,
+                        "pin_count": 0,
                     }
                 )
                 memo_value = item.get("memo", "")
                 PlannerDetail.objects.create(
                     plan_name=travel_title,
                     planner=planner,
-                    signup=user,
-                    title=tour,
-                    wdate=f"DAY {day}",       # 표시용
-                    actual_date=calculated_date,  # DateField에 맞게 date 타입 저장
+                    user=user,
+                    tourlist=tour,
+                    actual_date=calculated_date,
                     memo=memo_value
                 )
 
         return JsonResponse({"status": "success", "message": "일정이 저장되었습니다."})
     else:
         return JsonResponse({"status": "error", "message": "POST 요청만 허용됩니다."}, status=405)
-
 
 @csrf_exempt
 def update_destination_view(request):
@@ -841,20 +839,20 @@ def update_destination_view(request):
                     "lng": place["geometry"]["location"]["lng"],
                 })
         # 2. Google Places API - Nearby Search
-        # if search_lat and search_lng:
-        #     nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={search_lat},{search_lng}&radius=2000&language=ko&key={GOOGLE_MAPS_API_KEY}"
-        #     nearby_response = requests.get(nearby_url)
-        #     nearby_places = nearby_response.json()
-        #     for place in nearby_places.get("results", []):
-        #         recommended_places.append({
-        #             "name": place["name"],
-        #             "address": place.get("vicinity", ""),
-        #             "description": place.get("types", []),
-        #             "lat": place["geometry"]["location"]["lat"],
-        #             "lng": place["geometry"]["location"]["lng"],
-        #         })
+        if search_lat and search_lng:
+            nearby_url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={search_lat},{search_lng}&radius=2000&language=ko&key={GOOGLE_MAPS_API_KEY}"
+            nearby_response = requests.get(nearby_url)
+            nearby_places = nearby_response.json()
+            for place in nearby_places.get("results", []):
+                recommended_places.append({
+                    "name": place["name"],
+                    "address": place.get("vicinity", ""),
+                    "description": place.get("types", []),
+                    "lat": place["geometry"]["location"]["lat"],
+                    "lng": place["geometry"]["location"]["lng"],
+                })
         # 3. 한국관광공사 API
-        api_url = "http://apis.data.go.kr/B551011/KorService1/searchKeyword1"
+        api_url = "http://apis.data.go.kr/B551011/KorService2/searchKeyword2"
         params = {
             "serviceKey": KTO_API_KEY,
             "keyword": destination,
@@ -920,8 +918,8 @@ def schedule_delete_view(request, plan_no):
     if not user_email:
         return JsonResponse({"status": "error", "message": "로그인이 필요합니다."}, status=401)
     try:
-        planner = Planner.objects.get(plan_no=plan_no)
-        if not PlannerDetail.objects.filter(planner=planner, signup__email=user_email).exists():
+        planner = Planner.objects.get(id=plan_no)
+        if not PlannerDetail.objects.filter(planner=planner, user=user_email).exists():
             return JsonResponse({"status": "error", "message": "삭제 권한이 없습니다."}, status=403)
         planner.delete()
         return JsonResponse({"status": "success", "message": "일정이 삭제되었습니다."})

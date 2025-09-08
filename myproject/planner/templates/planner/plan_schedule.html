@@ -431,7 +431,6 @@
 
     function addMarkers(places) {
       places.forEach(function(place) {
-        if (!place.firstimage2) return;
         var lat = parseFloat(place.lat);
         var lng = parseFloat(place.lng);
         if (!isNaN(lat) && !isNaN(lng)) {
@@ -444,7 +443,7 @@
             title: displayName
           });
           markers.push(marker);
-          var imageUrl = place.firstimage2;
+          var imageUrl = place.firstimage2 || "{% static 'images/logo4.png' %}";
           var contentString = `
             <div style="max-width: 250px;">
               <strong>${displayName}</strong><br>
@@ -470,10 +469,10 @@
     }
 
     function updateRecommendedListPaginated(data) {
-      var filteredData = data.filter(function(place) { return place.firstimage2; });
+      var filteredData = data;
       var totalItems = filteredData.length;
       var totalPages = Math.ceil(totalItems / recItemsPerPage);
-      recCurrentPage = Math.min(recCurrentPage, totalPages) || 1;
+      recCurrentPage = Math.min(Math.max(recCurrentPage, 1), totalPages);
       var startIndex = (recCurrentPage - 1) * recItemsPerPage;
       var endIndex = startIndex + recItemsPerPage;
       var pageData = filteredData.slice(startIndex, endIndex);
@@ -483,7 +482,7 @@
           var rawName = place.name;
           var displayName = rawName.replace("서울특별시", "").trim();
           if (!displayName) displayName = rawName;
-          var imageUrl = place.firstimage2;
+          var imageUrl = place.firstimage2 || "{% static 'images/logo4.png' %}";
           recommendedHTML += `<div class="recommended-item d-flex align-items-center border-bottom py-1">
                                 <img src="${imageUrl}" alt="${rawName}" class="recommended-image" style="width:50px;height:50px;object-fit:cover;border-radius:5px;margin-right:10px;cursor:pointer;">
                                 <span>${rawName}</span>
@@ -567,23 +566,19 @@
         }
       });
       $(document).on("click", ".rec-next", function(){
-        if(recCurrentPage < Math.ceil(initialRecommended.filter(function(p){ return p.firstimage2; }).length / recItemsPerPage)){
           recCurrentPage++;
           updateRecommendedListPaginated(initialRecommended);
-        }
       });
 
       $(document).on("click", ".itin-prev", function(){
         if(itinCurrentPage > 1){
           itinCurrentPage--;
-          updateItineraryDisplayPaginated();
+          updateItineraryDisplayPaginated(initialRecommended);
         }
       });
       $(document).on("click", ".itin-next", function(){
-        if(itinCurrentPage < Math.ceil((itineraries[currentDay] || []).length / itinItemsPerPage)){
           itinCurrentPage++;
-          updateItineraryDisplayPaginated();
-        }
+          updateItineraryDisplayPaginated(initialRecommended);
       });
 
       var editPlan = $("#edit_plan").val();

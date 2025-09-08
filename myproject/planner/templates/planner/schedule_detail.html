@@ -83,7 +83,7 @@
     </div>
   </nav>
 
-    <!-- 이용방법 모달 -->
+  <!-- 이용방법 모달 -->
   <div class="modal fade" id="usageModal" tabindex="-1" aria-labelledby="usageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 800px;">
       <div class="modal-content">
@@ -140,47 +140,48 @@
     {% else %}
       <h2><b>{{ planner.region }} 여행 일정</b></h2>
     {% endif %}
-    <p>여행 기간: {{ planner.sdate }} ~ {{ planner.edate }}</p>
+    <p>여행 기간: {{ planner.start_date }} ~ {{ planner.end_date }}</p>
 
-    <!-- 일정 목록: plan_no가 5이면 각 항목에 샘플 이미지를 순환 적용 -->
+    <!-- 일정 목록 -->
     {% if sorted_days %}
-      {% for day in sorted_days %}
-        <div class="day-section">
-          <h4>DAY {{ forloop.counter }}</h4>
-          <ul class="list-group">
-            {% with details=itinerary_by_day|get_item:day %}
-              {% if details %}
-                {% for detail in details %}
-                  <li class="list-group-item">
-                    <span class="item-index">{{ forloop.counter }}</span>
-                    {% if planner.plan_no == 5 %}
-                      {# plan_no가 5이면 6개의 샘플 이미지를 순환하여 적용 #}
-<!--                      {% cycle 'images/sample1.jpg' 'images/sample2.jpg' 'images/sample3.jpg' 'images/sample4.jpg' 'images/sample5.jpg' 'images/sample6.jpg' as sample_img %}-->
-                      <img src="{% static sample_img %}" alt="샘플 이미지" class="itinerary-item-img">
-                    {% else %}
-                      {% if detail.title.image2 %}
-                        <img src="{% static detail.title.image2 %}" alt="{{ detail.title }}" class="itinerary-item-img">
-                      {% else %}
-                        <img src="https://fakeimg.pl/200x200/?retina=1&text=No+Image" alt="기본 이미지" class="itinerary-item-img">
-                      {% endif %}
-                    {% endif %}
-                    <div class="itinerary-info">
-                      <h5>{{ detail.title }}</h5>
-                      {% if detail.memo %}
-                        <p>{{ detail.memo|slice:":220" }}</p>
-                      {% endif %}
-                    </div>
-                  </li>
-                {% endfor %}
-              {% else %}
-                <li class="list-group-item">해당 날짜의 일정이 없습니다.</li>
-              {% endif %}
-            {% endwith %}
-          </ul>
-        </div>
-      {% endfor %}
+    {% for day in sorted_days %}
+    <div class="day-section">
+      <h4>DAY {{ forloop.counter }}</h4>
+      <ul class="list-group">
+        {% with details=itinerary_by_day|get_item:day %}
+        {% if details %}
+        {% for detail in details %}
+        <li class="list-group-item">
+          <span class="item-index">{{ forloop.counter }}</span>
+          {% if planner.id == 5 %}
+          {# plan_no가 5이면 샘플 이미지 6개를 순환 적용 #}
+          {% cycle 'images/sample1.jpg' 'images/sample2.jpg' 'images/sample3.jpg' 'images/sample4.jpg'
+          'images/sample5.jpg' 'images/sample6.jpg' as sample_img %}
+          <img src="{% static sample_img %}" alt="샘플 이미지" class="itinerary-item-img">
+          {% else %}
+          {% if detail.tourlist.image %}
+          <img src="{{ detail.tourlist.image.url }}" alt="{{ detail.tourlist.title }}" class="itinerary-item-img">
+          {% else %}
+          <img src="https://i.postimg.cc/J0v199k5/image.jpg" alt="기본 이미지" class="itinerary-item-img">
+          {% endif %}
+          {% endif %}
+          <div class="itinerary-info">
+            <h5>{{ detail.tourlist.title }}</h5>
+            {% if detail.memo %}
+            <p>{{ detail.memo|slice:":220" }}</p>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+        {% else %}
+        <li class="list-group-item">해당 날짜의 일정이 없습니다.</li>
+        {% endif %}
+        {% endwith %}
+      </ul>
+    </div>
+    {% endfor %}
     {% else %}
-      <p>등록된 일정이 없습니다.</p>
+    <p>등록된 일정이 없습니다.</p>
     {% endif %}
   </div>
 

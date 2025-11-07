@@ -57,20 +57,20 @@ AI Chatbot과 Open API를 활용하여 사용자가 여행 일정을 작성하�
 
 ## 💼 담당 역할 (Back-End)
 
-### 1️⃣ Database 최적화
+### Database 최적화
 - ERD 분석 단계에서 PK/FK 설계 미흡, 인덱스 부재, 불필요한 관계 발견  
 - 테이블 간 관계 재설정 및 PK/FK 기반 정규화 수행 → 데이터 참조 무결성 확보  
 - 검색 빈도 높은 필드에 인덱스 적용 → 쿼리 응답 속도 75ms → 10ms (약 85% 개선)
 - Debug Toolbar, MySQL EXPLAIN 활용하여 쿼리 성능 검증 및 최적화
 
-### 2️⃣ API 설계 및 구현
+### API 설계 및 구현
 - 사용자가 입력한 목적지와 여행 조건에 맞춰 맞춤형 관광지 추천 기능 개발
 - Open API(Google Maps API, 한국관광공사 API)를 활용하여 RESTful API 설계 및 Django API 엔드포인트 구축  
 - Google Maps API 및 한국관광공사 API 연동 → 데이터 커버리지 **65% → 92%**
 - 추천 적중률 **35% → 78%**, 검색 정확도 **70% → 90% (+20%p)** 향상
 - Django API 예외 처리 및 로그 기록 적용 → 안정적 서비스 운영 
 
-### 3️⃣ AI 기반 Chatbot 개발
+### AI 기반 Chatbot 개발
 - OpenAI GPT-4o-mini 모델 활용 → 여행 플래너 특화 Chatbot 개발
 - 시스템 프롬프트 최적화 → 추천 정확도 **60% → 92%**  
 - HTML/JSON 출력 구조화 → UI 표시 효율 40% 개선, UI 가독성 85% 향상  
